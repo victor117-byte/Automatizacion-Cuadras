@@ -6,7 +6,7 @@ import json
 import re
 
 # root = r"C:\Users\Victor\Documents\Cursos\Python\Automatizacion\PDF"
-root = r"C:\Users\Victor\Documents\Cursos\Python\Automatizacion\PDF"
+root = r"C:\Users\victo\Documents\Proyectos\Automatizacion-Cuadras\PDF"
 path = os.path.join(root, "PDF")
 
 # Funcion que obtiene los archivos con su ruta y se encarga de clasificarlos en arreglos
@@ -78,7 +78,8 @@ def exportDataAcusePresentacion(Archivos):
 
         for pag in range(len(page)):
             # print("pdf: ", i+1, "pagina: ",pag+1)
-            texto += reader._get_page(pag).extractText()
+            # texto += reader._get_page(pag).extractText()
+            texto += reader._get_page(pag).extract_text()
 
         # print("PDF: ", i+1)
         txt = re.sub("\n", " ", texto)
@@ -172,7 +173,8 @@ def exportDataAcuseRecepcion(Archivos):
 
         for pag in range(len(page)):
             # print("pdf: ", i+1, "pagina: ",pag+1)
-            texto += reader._get_page(pag).extractText()
+            # texto += reader._get_page(pag).extractText()
+            texto += reader._get_page(pag).extract_text()
 
         # print("PDF: ", i+1)
         txt = re.sub("\n", " ", texto)
@@ -266,7 +268,8 @@ def exportDataDiot(Archivos):
 
         for pag in range(len(page)):
             # print("pdf: ", i+1, "pagina: ",pag+1)
-            texto += reader._get_page(pag).extractText()
+            # texto += reader._get_page(pag).extractText()
+            texto += reader._get_page(pag).extract_text()
 
         # print("PDF: ", i+1)
         txt = re.sub("\n", " ", texto)
@@ -341,7 +344,8 @@ def exportDataConstancia(Archivos):
 
         for pag in range(len(page)):
             # print("pdf: ", i+1, "pagina: ",pag+1)
-            texto += reader._get_page(pag).extractText()
+            # texto += reader._get_page(pag).extractText()
+            texto += reader._get_page(pag).extract_text()
 
         # print("PDF: ", i+1)
         txt = re.sub("\n", " ", texto)
@@ -447,7 +451,8 @@ def exportDataOpinionCumplimiento(Archivos):
 
         for pag in range(len(page)):
             # print("pdf: ", i+1, "pagina: ",pag+1)
-            texto += reader._get_page(pag).extractText()
+            # texto += reader._get_page(pag).extractText()
+            texto += reader._get_page(pag).extract_text()
 
         # print("PDF: ", i+1)
         txt = re.sub("\n", " ", texto)
