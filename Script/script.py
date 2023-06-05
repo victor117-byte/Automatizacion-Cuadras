@@ -7,7 +7,8 @@ import re
 
 
 # root = r"../../PDF/"
-root = r"C:\Users\victo\Documents\Proyectos\Automatizacion-Cuadras\PDF"
+root = r"F:\Indicadores\PDF"
+# root = r"C:\Users\victo\Documents\Proyectos\Automatizacion-Cuadras\PDF"
 path = os.path.join(root, "PDF")
 
 # Funcion que obtiene los archivos con su ruta y se encarga de clasificarlos en arreglos
@@ -707,7 +708,7 @@ def funcion_Conceptos(txt):
     numero_Pagos_por_concepto = re.findall("Cantidad a pagar:.(.+? )", txt)
     # print(f"Numero de conceptos de pago: {len(numero_Pagos_por_concepto)}")
     # print(txt)
-    for i in range(6):
+    for i in range(7):
         num = i+1
         
         try: 
@@ -746,7 +747,7 @@ df_Pagos = pd.DataFrame(exportDataPagos(Archivos_Pagos), columns=column_names)
 # df_Pagos
 
 # # ACUSE Declaracion
-column_names = ["PDF","RFC","Fecha y hora presentacion","Num de Operacion","Periodo de Declaracion","Ejercicio","Total a Pagar","Vigente Hasta","Linea de Captura","Razon Social","Tipo Social","Impuesto a Favor","Concepto de Pago","Numero de Concepto" ,"Path"]
+column_names = ["PDF","RFC","Fecha y hora presentacion","Num de Operacion","Periodo de Declaracion","Ejercicio","Total a Pagar","Vigente Hasta","Linea de Captura","Razon Social","Tipo Social","Impuesto a Favor","Concepto de Pago","Pago por Concepto","Numero de Concepto" ,"Path"]
 df_Declaracion = pd.DataFrame(exportDataDeclaracion(Archivos_Declaracion), columns=column_names)
 
 # # ACUSE Acuse
@@ -781,10 +782,19 @@ df_no_clasificados =  pd.DataFrame(Archivos_no_clasificados, columns=column_name
 #                     ])
 
 # Export
+# import sys
+# !{sys.executable} -m pip install xlsxwriter
 
-df_Pagos.to_excel('./Dataframes/df_Pagos.xlsx', header=True, index=None)
-df_Declaracion.to_excel('./Dataframes/df_Declaracion.xlsx', header=True, index=None)
-df_Acuse_Presentacion.to_excel('./Dataframes/df_Acuse_Presentacion.xlsx', header=True, index=None)
-df_Diot.to_excel('./Dataframes/df_Diot.xlsx', header=True, index=None)
-df_Constancia.to_excel('./Dataframes/df_Constancia.xlsx', header=True, index=None)
-df_no_clasificados.to_excel('./Dataframes/df_no_Clasificados.xlsx', header=True, index=None)
+# import os
+ 
+dir = 'F:\Indicadores\Automatizacion-Cuadras\Script\Dataframes'
+for f in os.listdir(dir):
+    os.remove(os.path.join(dir, f))
+ 
+
+df_Pagos.to_excel('F:\Indicadores\Automatizacion-Cuadras\Script\Dataframes/df_Pagos.xlsx', header=True, index=None)
+df_Declaracion.to_excel('F:\Indicadores\Automatizacion-Cuadras\Script\Dataframes/df_Declaracion.xlsx', header=True, index=None)
+df_Acuse_Presentacion.to_excel('F:\Indicadores\Automatizacion-Cuadras\Script\Dataframes/df_Acuse_Presentacion.xlsx', header=True, index=None)
+df_Diot.to_excel('F:\Indicadores\Automatizacion-Cuadras\Script\Dataframes/df_Diot.xlsx', header=True, index=None)
+df_Constancia.to_excel('F:\Indicadores\Automatizacion-Cuadras\Script\Dataframes/df_Constancia.xlsx', header=True, index=None)
+df_no_clasificados.to_excel('F:\Indicadores\Automatizacion-Cuadras\Script\Dataframes/df_no_Clasificados.xlsx', header=True, index=None)
