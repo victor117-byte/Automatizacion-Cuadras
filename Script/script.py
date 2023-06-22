@@ -6,7 +6,7 @@ import json
 import re
 
 
-# root = r"../../PDF/"
+# root = r"C:\Users\victo\Documents\Proyectos\Automatizacion-Cuadras\PDF\PDF"
 root = r"F:\Indicadores\PDF"
 # root = r"C:\Users\victo\Documents\Proyectos\Automatizacion-Cuadras\PDF"
 path = os.path.join(root, "PDF")
@@ -708,6 +708,8 @@ def funcion_Conceptos(txt):
     numero_Pagos_por_concepto = re.findall("Cantidad a pagar:.(.+? )", txt)
     # print(f"Numero de conceptos de pago: {len(numero_Pagos_por_concepto)}")
     # print(txt)
+    
+    num_2 = 0
     for i in range(7):
         num = i+1
         
@@ -722,12 +724,17 @@ def funcion_Conceptos(txt):
                 _Concepto = _Concepto.strip()
             except:
                 _Concepto = ""
-        try:
-            Pago_por_Concepto = numero_Pagos_por_concepto[i]
-            Pago_por_Concepto = Pago_por_Concepto[:-1]
         
-        except:
+        if len(_Concepto)>1:
+            try:
+                Pago_por_Concepto = numero_Pagos_por_concepto[num_2]
+                Pago_por_Concepto = Pago_por_Concepto[:-1]
+                num_2 = num_2+1
+            except:
+                Pago_por_Concepto = ""
+        else:
             Pago_por_Concepto = ""
+            pass
         
         dic_concepto = {
             _Concepto:Pago_por_Concepto
