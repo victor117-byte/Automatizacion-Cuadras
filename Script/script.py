@@ -6,7 +6,7 @@ import json
 import re
 
 
-# root = r"C:\Users\victo\Documents\Proyectos\Automatizacion-Cuadras\PDF\PDF"
+# root = r"../../PDF/"
 root = r"F:\Indicadores\PDF"
 # root = r"C:\Users\victo\Documents\Proyectos\Automatizacion-Cuadras\PDF"
 path = os.path.join(root, "PDF")
@@ -98,29 +98,34 @@ def exportDataDeclaracion(Archivos):
 
         # rfc
         rfc = re.search("RFC:.(.*?\s)", txt).group(1)
+        rfc = rfc.strip()
         # Fecha
         try:
             Fecha_y_hora_presentacion = re.search(
                 "Fecha y hora de presentaci.n:.{11}", txt)[0]
             Fecha_y_hora_presentacion = re.split(':', Fecha_y_hora_presentacion)[1]
+            Fecha_y_hora_presentacion = Fecha_y_hora_presentacion.strip()
         except:
             Fecha_y_hora_presentacion = ""
 
         # numero de operacion
         try:
             Num_de_Operacion = re.search(
-                "N.mero de operaci.n:.(\d*?\s)", txt).group(1)
+                "N.mero de operaci.n:(\d*?\s)", txt).group(1)
+            Num_de_Operacion = Num_de_Operacion.strip()
         except:
             Num_de_Operacion = ""
         # periodo de la declaracion
         try:
             Periodo_de_declaracion = re.search(
-                "Per.odo de la declaraci.n:\s(.+?\s)", txt).group(1)
+                "Per.odo de la declaraci.n:(.+?\s)", txt).group(1)
+            Periodo_de_declaracion = Periodo_de_declaracion.strip()
         except:
             Periodo_de_declaracion = ""
         # Ejercicio
         try:
-            Ejercicio = re.search("Ejercicio:\s(.+?\s)", txt).group(1)
+            Ejercicio = re.search("Ejercicio:(.+?\s)", txt).group(1)
+            Ejercicio = Ejercicio.strip()
         except:
             Ejercicio = ""
         # Denominación o razón social:
@@ -134,8 +139,17 @@ def exportDataDeclaracion(Archivos):
                 Tipo_RazonSocial = "Persona Moral"
 
         except:
-            RazonSocial = ""
-            Tipo_RazonSocial = ""
+            try:
+                RazonSocial_base = re.search("Hoja.\d.de\s\d(.*?)Tipo", txt).group(1)
+                RazonSocial = RazonSocial_base.split(": ")[1]
+                if RazonSocial_base.split(":")[0] =="Nombre":
+                    Tipo_RazonSocial = "Persona Fisica"
+                else:
+                    Tipo_RazonSocial = "Persona Moral"
+
+            except:
+                RazonSocial = ""
+                Tipo_RazonSocial = ""
 
         # SELECCION LINEA DE CAPTURA
         try:
@@ -746,62 +760,66 @@ def funcion_Conceptos(txt):
     return Array_Conceptos
         # print(f"->{Array_Conceptos}")
 
+try:
 
-# PAGOS
-column_names=["PDF","RFC", "Entidad", "Tipo", "Fecha Presentacion", "Importe a Pagar", "Linea de Captura", "Num Operacion", "Vigencia", "Tipo de Declaracion", "Fecha de Pago","Concepto de Pago","Pago por Concepto","Numero de Concepto", "Path"]
-df_Pagos = pd.DataFrame(exportDataPagos(Archivos_Pagos), columns=column_names)
-# print(df_Pagos)
-# df_Pagos
+    # PAGOS
+    column_names=["PDF","RFC", "Entidad", "Tipo", "Fecha Presentacion", "Importe a Pagar", "Linea de Captura", "Num Operacion", "Vigencia", "Tipo de Declaracion", "Fecha de Pago","Concepto de Pago","Pago por Concepto","Numero de Concepto", "Path"]
+    df_Pagos = pd.DataFrame(exportDataPagos(Archivos_Pagos), columns=column_names)
+    # print(df_Pagos)
+    # df_Pagos
 
-# # ACUSE Declaracion
-column_names = ["PDF","RFC","Fecha y hora presentacion","Num de Operacion","Periodo de Declaracion","Ejercicio","Total a Pagar","Vigente Hasta","Linea de Captura","Razon Social","Tipo Social","Impuesto a Favor","Concepto de Pago","Pago por Concepto","Numero de Concepto" ,"Path"]
-df_Declaracion = pd.DataFrame(exportDataDeclaracion(Archivos_Declaracion), columns=column_names)
+    # # ACUSE Declaracion
+    column_names = ["PDF","RFC","Fecha y hora presentacion","Num de Operacion","Periodo de Declaracion","Ejercicio","Total a Pagar","Vigente Hasta","Linea de Captura","Razon Social","Tipo Social","Impuesto a Favor","Concepto de Pago","Pago por Concepto","Numero de Concepto" ,"Path"]
+    df_Declaracion = pd.DataFrame(exportDataDeclaracion(Archivos_Declaracion), columns=column_names)
 
-# # ACUSE Acuse
-column_names = ["PDF","RFC","Fecha y hora presentacion","Num de Operacion","Periodo de Declaracion","Ejercicio","Total a Pagar","Vigente Hasta","Linea de Captura","Razon_Social","Impuesto a Favor","Path"]
-df_Acuse_Presentacion = pd.DataFrame(exportDataAcuseRecepcion(Archivos_Acuse_Presentacion), columns=column_names)
+    # # ACUSE Acuse
+    column_names = ["PDF","RFC","Fecha y hora presentacion","Num de Operacion","Periodo de Declaracion","Ejercicio","Total a Pagar","Vigente Hasta","Linea de Captura","Razon_Social","Impuesto a Favor","Path"]
+    df_Acuse_Presentacion = pd.DataFrame(exportDataAcuseRecepcion(Archivos_Acuse_Presentacion), columns=column_names)
 
-# # DIOT
-column_names = ["PDF","Usuario", "Archivo Recibido", "tamanio","Fecha_Recepcion", "Hora_Recepcion", "Folio", "Path"]
-df_Diot = pd.DataFrame(exportDataDiot(Archivos_Diot), columns=column_names)
-
-
-# CONTANCIA
-column_names=["PDF","RFC", "Razon Social", "CURP", "Primer Apellido", "Segundo Apellido", "Nombre Comercial", "Fecha Operacion", "Estatus", "Regimenes", "Path"]
-df_Constancia = pd.DataFrame(exportDataConstancia(Archivos_Constancia), columns=column_names)
+    # # DIOT
+    column_names = ["PDF","Usuario", "Archivo Recibido", "tamanio","Fecha_Recepcion", "Hora_Recepcion", "Folio", "Path"]
+    df_Diot = pd.DataFrame(exportDataDiot(Archivos_Diot), columns=column_names)
 
 
+    # CONTANCIA
+    column_names=["PDF","RFC", "Razon Social", "CURP", "Primer Apellido", "Segundo Apellido", "Nombre Comercial", "Fecha Operacion", "Estatus", "Regimenes", "Path"]
+    df_Constancia = pd.DataFrame(exportDataConstancia(Archivos_Constancia), columns=column_names)
 
-# Opinion de cumplimiento
-column_names=["PDF","RFC", "Folio", "Path"]
-df_Opinion_Cumplimiento =  pd.DataFrame(exportDataOpinionCumplimiento(Archivos_Opinion_Cumplimiento), columns=column_names)
 
-column_names=["Documentos sin clasificar"]
-df_no_clasificados =  pd.DataFrame(Archivos_no_clasificados, columns=column_names)
-# df_no_clasificados
 
-# Export = pd.concat([df_Declaracion,
-#                     df_Acuse_Presentacion,
-#                     df_Diot,
-#                     df_Constancia,
-#                     df_Opinion_Cumplimiento,
-#                     df_Pagos
-#                     ])
+    # Opinion de cumplimiento
+    column_names=["PDF","RFC", "Folio", "Path"]
+    df_Opinion_Cumplimiento =  pd.DataFrame(exportDataOpinionCumplimiento(Archivos_Opinion_Cumplimiento), columns=column_names)
 
-# Export
-# import sys
-# !{sys.executable} -m pip install xlsxwriter
+    column_names=["Documentos sin clasificar"]
+    df_no_clasificados =  pd.DataFrame(Archivos_no_clasificados, columns=column_names)
+    # df_no_clasificados
 
-# import os
- 
-dir = 'F:\Indicadores\Automatizacion-Cuadras\Script\Dataframes'
-for f in os.listdir(dir):
-    os.remove(os.path.join(dir, f))
- 
+    # Export = pd.concat([df_Declaracion,
+    #                     df_Acuse_Presentacion,
+    #                     df_Diot,
+    #                     df_Constancia,
+    #                     df_Opinion_Cumplimiento,
+    #                     df_Pagos
+    #                     ])
 
-df_Pagos.to_excel('F:\Indicadores\Automatizacion-Cuadras\Script\Dataframes/df_Pagos.xlsx', header=True, index=None)
-df_Declaracion.to_excel('F:\Indicadores\Automatizacion-Cuadras\Script\Dataframes/df_Declaracion.xlsx', header=True, index=None)
-df_Acuse_Presentacion.to_excel('F:\Indicadores\Automatizacion-Cuadras\Script\Dataframes/df_Acuse_Presentacion.xlsx', header=True, index=None)
-df_Diot.to_excel('F:\Indicadores\Automatizacion-Cuadras\Script\Dataframes/df_Diot.xlsx', header=True, index=None)
-df_Constancia.to_excel('F:\Indicadores\Automatizacion-Cuadras\Script\Dataframes/df_Constancia.xlsx', header=True, index=None)
-df_no_clasificados.to_excel('F:\Indicadores\Automatizacion-Cuadras\Script\Dataframes/df_no_Clasificados.xlsx', header=True, index=None)
+    # Export
+    # import sys
+    # !{sys.executable} -m pip install xlsxwriter
+
+    import os
+    
+    dir = 'F:\Indicadores\Automatizacion-Cuadras\Script\Dataframes'
+    for f in os.listdir(dir):
+        os.remove(os.path.join(dir, f))
+    
+
+    df_Pagos.to_excel('F:\Indicadores\Automatizacion-Cuadras\Script\Dataframes/df_Pagos.xlsx', header=True, index=None)
+    df_Declaracion.to_excel('F:\Indicadores\Automatizacion-Cuadras\Script\Dataframes/df_Declaracion.xlsx', header=True, index=None)
+    df_Acuse_Presentacion.to_excel('F:\Indicadores\Automatizacion-Cuadras\Script\Dataframes/df_Acuse_Presentacion.xlsx', header=True, index=None)
+    df_Diot.to_excel('F:\Indicadores\Automatizacion-Cuadras\Script\Dataframes/df_Diot.xlsx', header=True, index=None)
+    df_Constancia.to_excel('F:\Indicadores\Automatizacion-Cuadras\Script\Dataframes/df_Constancia.xlsx', header=True, index=None)
+    df_no_clasificados.to_excel('F:\Indicadores\Automatizacion-Cuadras\Script\Dataframes/df_no_Clasificados.xlsx', header=True, index=None)
+
+except:
+    print("Python Error")
