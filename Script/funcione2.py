@@ -6,12 +6,14 @@ import json
 import re
 import datetime
 import locale
-import shutil
+from sqlalchemy import create_engine, MetaData, Table, create_engine, inspect
 import pandas as pd
 import numpy as np
 import base64
 import pandas as pd
 from sqlalchemy import create_engine
+import pyodbc
+import shutil
 
 def copy_pdf(src, dest, eliminar=False):
     src = rf"{src}"
@@ -25,8 +27,6 @@ def copy_pdf(src, dest, eliminar=False):
     
     except Exception as e:
         print(f"Error al copiar el archivo: {e}")
-
-
 
 def convertir_pdf_a_base64(ruta_pdf):
     try:
@@ -76,7 +76,9 @@ def read_file_pdf(Archivos, path_raiz_cliente):
         _type_: _description_
     """
     try:
-        conexion_str = "mssql+pyodbc://sa:Foretagbi_01@BDD\\APLICACIONSAT/AppSat?driver=ODBC+Driver+17+for+SQL+Server"
+        conexion1 = r"C:\Users\Administrador.WIN-3GR2N6O8MHU\Desktop\Aplicacion_SAT\Dataframes"
+        conexion2 = "mssql+pyodbc://sa:Foretagbi_01@BDD\\APLICACIONSAT/AppSat?driver=ODBC+Driver+17+for+SQL+Server"
+
 
         pdf = open(Archivos, 'rb')
         # print(Archivos[i])
@@ -126,7 +128,7 @@ def read_file_pdf(Archivos, path_raiz_cliente):
                 "Tipo_pdf": Tipo_pdf,
                 "src": Archivos,
                 "dest":ruta_guardado}
-            data = exportDataDeclaracion(txt, Archivos, Tipo_pdf, conexion)
+            data = exportDataDeclaracion(txt, Archivos, Tipo_pdf, conexion1, conexion2)
             
             
         # Constancias de situacion fiscal
@@ -162,7 +164,7 @@ def read_file_pdf(Archivos, path_raiz_cliente):
                 "Tipo_pdf": Tipo_pdf,
                 "src": Archivos,
                 "dest":ruta_guardado}
-            data = exportDataConstancia(txt, Archivos, Tipo_pdf, conexion)
+            data = exportDataConstancia(txt, Archivos, Tipo_pdf, conexion1, conexion2)
             
             
         # Formato de Informacion de contribuyente LH
@@ -186,7 +188,7 @@ def read_file_pdf(Archivos, path_raiz_cliente):
             
             
             # df_Informacion_Controbuyente =  pd.DataFrame(exportData_Info_Contribuyente(txt, ruta_guardado), columns=column_names)
-            data = exportData_Info_Contribuyente(txt, ruta_guardado, Tipo_pdf, conexion)
+            data = exportData_Info_Contribuyente(txt, ruta_guardado, Tipo_pdf, conexion1, conexion2)
             
                       
         # Formato de Pagos
@@ -214,7 +216,7 @@ def read_file_pdf(Archivos, path_raiz_cliente):
                 "src": Archivos,
                 "dest":ruta_guardado}
             
-            data = exportDataPagos(txt, Archivos, Tipo_pdf, conexion)
+            data = exportDataPagos(txt, Archivos, Tipo_pdf, conexion1, conexion2)
             
             
         # Formato DIOT
@@ -245,7 +247,7 @@ def read_file_pdf(Archivos, path_raiz_cliente):
                 "src": Archivos,
                 "dest":ruta_guardado}
             
-            data = exportDataDiot(txt, Archivos, Tipo_pdf, conexion)
+            data = exportDataDiot(txt, Archivos, Tipo_pdf, conexion1, conexion2)
             
         
         # Formato OPINION DE CUMPLIMIENTO
@@ -271,7 +273,7 @@ def read_file_pdf(Archivos, path_raiz_cliente):
                 "Tipo_pdf": Tipo_pdf,
                 "src": Archivos,
                 "dest":ruta_guardado}
-            data = exportDataOpinionCumplimiento(txt, Archivos, Tipo_pdf, conexion)
+            data = exportDataOpinionCumplimiento(txt, Archivos, Tipo_pdf, conexion1, conexion2)
             
         # # No identificado
         else:
@@ -363,7 +365,7 @@ def Clasificador_Archivos(rutas, path_raiz_cliente,  fecha_limite=None):
                     
     return array_no_identificado, array_Declaraciones, array_Pagos, array_Constancia, array_Diot, array_Opinion_Cumplimiento, array_Info_Contri
 
-def exportDataDeclaracion(pdf_txt, path_pdf, Tipo_pdf, conexion):
+def exportDataDeclaracion(pdf_txt, path_pdf, Tipo_pdf, conexion1, conexion2):
     try:
         pdf_base64 = convertir_pdf_a_base64(path_pdf)
         txt = pdf_txt
@@ -479,7 +481,7 @@ def exportDataDeclaracion(pdf_txt, path_pdf, Tipo_pdf, conexion):
             # print(arreglo_conceptos[w])
             
             column_names = ["PDF","RFC","Fecha y hora presentacion","Num de Operacion","Periodo de Declaracion","Ejercicio","Total a Pagar","Vigente Hasta","Linea de Captura","Razon Social","Tipo Social","Impuesto a Favor","Concepto de Pago","Pago por Concepto","Numero de Concepto" ,"Path", "pdf base64"]
-            df = pd.DataFrame(np.array([
+            valor=[
                 "Declaracion",
                 rfc,
                 Fecha_y_hora_presentacion,
@@ -497,15 +499,18 @@ def exportDataDeclaracion(pdf_txt, path_pdf, Tipo_pdf, conexion):
                 str(Numero_Concepto),
                 path_pdf,
                 pdf_base64
-                ]), column_names)
+                ]
+            df = pd.DataFrame([valor], columns=column_names)
             # array_docs.append(data_fila)
-            almacenar_dataframe_en_sqlserver(df, Tipo_pdf, conexion)
+            
+            almacenar_dataframe_en_excel(df, Tipo_pdf, conexion1)
+            almacenar_dataframe_en_sqlserver(df, Tipo_pdf, conexion2)
         
             return df
     except Exception as e:
         print("Error en funcion exportDataDeclaracion: ", e)
 
-def exportDataAcuseRecepcion(pdf_txt, path_pdf, Tipo_pdf, conexion):
+def exportDataAcuseRecepcion(pdf_txt, path_pdf, Tipo_pdf, conexion1, conexion2):
     try:
         pdf_base64 = convertir_pdf_a_base64(path_pdf)
         txt = pdf_txt
@@ -568,7 +573,7 @@ def exportDataAcuseRecepcion(pdf_txt, path_pdf, Tipo_pdf, conexion):
         # data_fila = [rfc, Fecha_y_hora_presentacion, Num_de_Operacion, Periodo_de_declaracion, Ejercicio,  total_a_pagar, Vigente_hasta, Linea_de_Captura, Archivos[i]]
         
         column_names = ["PDF","RFC","Fecha y hora presentacion","Num de Operacion","Periodo de Declaracion","Ejercicio","Total a Pagar","Vigente Hasta","Linea de Captura","Razon_Social","Impuesto a Favor","Path", "pdf base64"]
-        data_fila = pd.DataFrame(np.array([
+        valor=[
             "Acuse Recepcion",
             rfc,
             Fecha_y_hora_presentacion,
@@ -582,14 +587,16 @@ def exportDataAcuseRecepcion(pdf_txt, path_pdf, Tipo_pdf, conexion):
             Impuesto_a_favor,
             path_pdf,
             pdf_base64
-            ]), column_names)
+            ]
+        df = pd.DataFrame([valor], columns=column_names)
         
-        almacenar_dataframe_en_sqlserver(data_fila, Tipo_pdf, conexion)
-        return data_fila
+        almacenar_dataframe_en_excel(df, Tipo_pdf, conexion1)
+        almacenar_dataframe_en_sqlserver(df, Tipo_pdf, conexion2)
+        return df
     except Exception as e:
         print("Error en funcion exportDataAcuseRecepcion: ", e)
         
-def exportDataDiot(pdf_txt, path_pdf, Tipo_pdf, conexion):
+def exportDataDiot(pdf_txt, path_pdf, Tipo_pdf, conexion1, conexion2):
     try:
         pdf_base64 = convertir_pdf_a_base64(path_pdf)
         txt = pdf_txt
@@ -636,7 +643,7 @@ def exportDataDiot(pdf_txt, path_pdf, Tipo_pdf, conexion):
 
         column_names = ["PDF","Usuario", "Archivo Recibido", "tamanio","Fecha_Recepcion", "Hora_Recepcion", "Folio", "Path", "pdf base64"]
 
-        data_fila = pd.Dataframe(np.array([
+        valor=[
             "Diot",
             usuario,
             Archivo_Recibido,
@@ -646,14 +653,16 @@ def exportDataDiot(pdf_txt, path_pdf, Tipo_pdf, conexion):
             Folio,
             path_pdf,
             pdf_base64
-        ]), column_names)
+        ]
+        df = pd.DataFrame(valor, columns=column_names)
         
-        almacenar_dataframe_en_sqlserver(data_fila, Tipo_pdf, conexion)
-        return data_fila
+        almacenar_dataframe_en_excel(df, Tipo_pdf, conexion1)
+        almacenar_dataframe_en_sqlserver(df, Tipo_pdf, conexion2)
+        return df
     except Exception as e:
         print("Error en funcion exportDataDiot: ", e)
 
-def exportDataConstancia(pdf_txt, path_pdf, Tipo_pdf, conexion):
+def exportDataConstancia(pdf_txt, path_pdf, Tipo_pdf, conexion1, conexion2):
     try:
         pdf_base64 = convertir_pdf_a_base64(path_pdf)
         txt = pdf_txt
@@ -727,7 +736,7 @@ def exportDataConstancia(pdf_txt, path_pdf, Tipo_pdf, conexion):
 
         column_names=["PDF","RFC", "Razon Social", "CURP", "Primer Apellido", "Segundo Apellido", "Nombre Comercial", "Fecha Operacion", "Estatus", "Regimenes", "Path", "pdf base64"]
 
-        data_fila = pd.Dataframe(np.array([
+        valor=[
             "Constancia",
             rfc,
             Razon_Social_Nombre,
@@ -740,13 +749,15 @@ def exportDataConstancia(pdf_txt, path_pdf, Tipo_pdf, conexion):
             Regimenes,
             path_pdf,
             pdf_base64
-        ]), column_names)
-        almacenar_dataframe_en_sqlserver(data_fila, Tipo_pdf, conexion)
-        return data_fila
+        ]
+        df = pd.DataFrame([valor], columns=column_names)
+        almacenar_dataframe_en_excel(df, Tipo_pdf, conexion1)
+        almacenar_dataframe_en_sqlserver(df, Tipo_pdf, conexion2)
+        return df
     except Exception as e:
         print("Error en funcion exportDataConstancia: ", e)
         
-def exportDataOpinionCumplimiento(pdf_txt, path_pdf, Tipo_pdf, conexion):
+def exportDataOpinionCumplimiento(pdf_txt, path_pdf, Tipo_pdf, conexion1, conexion2):
     try:
         pdf_base64 = convertir_pdf_a_base64(path_pdf)
         txt = pdf_txt
@@ -767,19 +778,21 @@ def exportDataOpinionCumplimiento(pdf_txt, path_pdf, Tipo_pdf, conexion):
             RFC = ""
             
         column_names=["PDF","RFC", "Folio", "Path", "pdf base64"]
-        data_fila = pd.DataFrame(np.array([
+        valor=[
             'Opinion cumplimiento',
             RFC,
             folio,
             path_pdf,
             pdf_base64
-        ]), column_names)
-        almacenar_dataframe_en_sqlserver(data_fila, Tipo_pdf, conexion)
-        return data_fila
+        ]
+        df = pd.DataFrame([valor], columns=column_names)
+        almacenar_dataframe_en_excel(df, Tipo_pdf, conexion1)
+        almacenar_dataframe_en_sqlserver(df, Tipo_pdf, conexion2)
+        return df
     except Exception as e:
         print("Error en funcion exportDataOpinionCumplimiento: ", e)
         
-def exportDataPagos(pdf_txt, path_pdf, Tipo_pdf, conexion):
+def exportDataPagos(pdf_txt, path_pdf, Tipo_pdf, conexion1, conexion2):
     try:
         pdf_base64 = convertir_pdf_a_base64(path_pdf)
         txt = pdf_txt
@@ -893,7 +906,7 @@ def exportDataPagos(pdf_txt, path_pdf, Tipo_pdf, conexion):
                 concepto =""
             # print(arreglo_conceptos[w])
             column_names=["PDF","RFC", "Entidad", "Tipo", "Fecha Presentacion", "Importe a Pagar", "Linea de Captura", "Num Operacion", "Vigencia", "Tipo de Declaracion", "Fecha de Pago","Concepto de Pago","Pago por Concepto","Numero de Concepto", "Path", "pdf base64"]
-            data_fila = pd.DataFrame(np.array([
+            valor=[
                 'Acuse Confirmacion de Pago',
                 rfc,
                 Entidad,
@@ -911,9 +924,11 @@ def exportDataPagos(pdf_txt, path_pdf, Tipo_pdf, conexion):
                 str(Numero_Concepto),
                 path_pdf,
                 pdf_base64
-                ]), column_names)
-            almacenar_dataframe_en_sqlserver(data_fila, Tipo_pdf, conexion)
-            return data_fila
+                ]
+            df = pd.DataFrame([valor], columns=column_names)
+            almacenar_dataframe_en_excel(df, Tipo_pdf, conexion1)
+            almacenar_dataframe_en_sqlserver(df, Tipo_pdf, conexion2)
+            return df
     except Exception as e:
         print("Error en funcion exportDataPagos: ", e)
 
@@ -962,7 +977,7 @@ def funcion_Conceptos(txt):
     return Array_Conceptos
         # print(f"->{Array_Conceptos}")
 
-def exportData_Info_Contribuyente(pdf_txt, path_pdf, Tipo_pdf, conexion):
+def exportData_Info_Contribuyente(pdf_txt, path_pdf, Tipo_pdf, conexion1, conexion2):
     try:
         pdf_base64 = convertir_pdf_a_base64(path_pdf)
         # Text Mining
@@ -1028,7 +1043,7 @@ def exportData_Info_Contribuyente(pdf_txt, path_pdf, Tipo_pdf, conexion):
         
         column_names=["PDF","RFC", "Nombre","Usuario","Calle Numero", "Estado", "Contraseña","Contraseña Firma", "Contraseña SIPARE", "Cuenta SIPARE", "Path", "pdf base64"]
             
-        df = pd.DataFrame(np.array([
+        valor=[
             "Informacion Contribuyente",
             rfc,
             nombre,
@@ -1041,18 +1056,53 @@ def exportData_Info_Contribuyente(pdf_txt, path_pdf, Tipo_pdf, conexion):
             cuenta_sipare,
             path_pdf,
             pdf_base64
-            ]), column_names)
-        almacenar_dataframe_en_sqlserver(df, Tipo_pdf, conexion)
+            ]
+        df = pd.DataFrame([valor], columns=column_names)
+        almacenar_dataframe_en_excel(df, Tipo_pdf, conexion1)
+        almacenar_dataframe_en_sqlserver(df, Tipo_pdf, conexion2)
         return df
     except Exception as e:
         print("Error en funcion exportData_Info_Contribuyente: ", e)
         
 
 
+def almacenar_dataframe_en_excel(dataframe, nombre, path):
+    """
+    Almacena un DataFrame en un archivo Excel. Si el archivo no existe, lo crea.
+
+    Parameters:
+    - dataframe: El DataFrame que se almacenará en el archivo Excel.
+    - nombre: Nombre base del archivo Excel (sin extensión).
+    - path: Ruta del directorio donde se almacenará el archivo.
+
+    Returns:
+    - Ruta completa del archivo Excel creado o actualizado.
+    """
+    # Combinar nombre y extensión del archivo
+    nombre_archivo = f"{nombre}.xlsx"
+    
+    # Crear la ruta completa del archivo
+    ruta_completa = os.path.join(path, nombre_archivo)
+
+    # Verificar si el archivo ya existe
+    if os.path.exists(ruta_completa):
+        # Si el archivo existe, cargar el contenido existente y agregar las filas del DataFrame
+        existente_df = pd.read_excel(ruta_completa)
+        nuevo_df = pd.concat([existente_df, dataframe], ignore_index=True)
+    else:
+        # Si el archivo no existe, usar el DataFrame original
+        nuevo_df = dataframe
+
+    # Guardar el DataFrame en el archivo Excel
+    nuevo_df.to_excel(ruta_completa, index=False)
+
+    print(f"DataFrame almacenado en '{ruta_completa}'.")
+
+
 def almacenar_dataframe_en_sqlserver(dataframe, tabla, conexion_str):
     """
     Almacena un DataFrame en una tabla de SQL Server.
-    
+
     Parameters:
     - dataframe: El DataFrame que se almacenará en la tabla.
     - tabla: Nombre de la tabla en la base de datos.
@@ -1061,8 +1111,9 @@ def almacenar_dataframe_en_sqlserver(dataframe, tabla, conexion_str):
     # Crear una conexión a la base de datos
     engine = create_engine(conexion_str)
 
-    # Verificar si la tabla ya existe en la base de datos
-    if engine.has_table(tabla):
+    # Utilizar el objeto 'inspector' para verificar si la tabla existe
+    inspector = inspect(engine)
+    if tabla in inspector.get_table_names():
         # Si la tabla existe, agregar el DataFrame a la tabla
         dataframe.to_sql(name=tabla, con=engine, index=False, if_exists='append')
         print(f"DataFrame agregado a la tabla '{tabla}'.")
