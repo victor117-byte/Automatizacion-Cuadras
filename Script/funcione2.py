@@ -321,7 +321,7 @@ def Clasificador_Archivos(rutas, path_raiz_cliente,  fecha_limite=None):
                 if fecha_creacion >= fecha_limite and name.endswith(".pdf"):
                     Carpeta_ejercicio = fecha_creacion.year
                     dic_document = read_file_pdf(file_path, path_raiz_cliente + str(Carpeta_ejercicio)+"/")
-                    print("-->", dic_document)
+                    # print("-->", dic_document)
                     array_docs.append(dic_document)
                 
     # Resultados
@@ -367,7 +367,7 @@ def Clasificador_Archivos(rutas, path_raiz_cliente,  fecha_limite=None):
 
 def exportDataDeclaracion(pdf_txt, path_pdf, Tipo_pdf, conexion1, conexion2):
     try:
-        pdf_base64 = convertir_pdf_a_base64(path_pdf)
+        pdf_base64 = ProcessPDF(path_pdf, Tipo_pdf)
         txt = pdf_txt
         # Text Mining
         # DATOS GENERALES
@@ -480,9 +480,9 @@ def exportDataDeclaracion(pdf_txt, path_pdf, Tipo_pdf, conexion1, conexion2):
                 concepto =""
             # print(arreglo_conceptos[w])
             
-            column_names = ["PDF","RFC","Fecha y hora presentacion","Num de Operacion","Periodo de Declaracion","Ejercicio","Total a Pagar","Vigente Hasta","Linea de Captura","Razon Social","Tipo Social","Impuesto a Favor","Concepto de Pago","Pago por Concepto","Numero de Concepto" ,"Path", "pdf base64"]
+            column_names = ["Tipo_pdf","RFC","Fecha y hora presentacion","Num de Operacion","Periodo de Declaracion","Ejercicio","Total a Pagar","Vigente Hasta","Linea de Captura","Razon Social","Tipo Social","Impuesto a Favor","Concepto de Pago","Pago por Concepto","Numero de Concepto" ,"Path"]
             valor=[
-                "Declaracion",
+                Tipo_pdf,
                 rfc,
                 Fecha_y_hora_presentacion,
                 Num_de_Operacion,
@@ -497,14 +497,19 @@ def exportDataDeclaracion(pdf_txt, path_pdf, Tipo_pdf, conexion1, conexion2):
                 concepto,
                 Precio_por_concepto,
                 str(Numero_Concepto),
-                path_pdf,
-                pdf_base64
+                path_pdf
                 ]
             df = pd.DataFrame([valor], columns=column_names)
             # array_docs.append(data_fila)
-            
-            almacenar_dataframe_en_excel(df, Tipo_pdf, conexion1)
-            almacenar_dataframe_en_sqlserver(df, Tipo_pdf, conexion2)
+            df = pd.merge(df, pdf_base64, how='outer')
+            try:
+                almacenar_dataframe_en_excel(df, Tipo_pdf, conexion1)
+            except Exception as e:
+                print("Error al almacenar en excel: ", e)
+            try:
+                almacenar_dataframe_en_sqlserver(df, Tipo_pdf, conexion2)
+            except Exception as e:
+                print("Error al almacernar el db: ", e)
         
             return df
     except Exception as e:
@@ -512,7 +517,7 @@ def exportDataDeclaracion(pdf_txt, path_pdf, Tipo_pdf, conexion1, conexion2):
 
 def exportDataAcuseRecepcion(pdf_txt, path_pdf, Tipo_pdf, conexion1, conexion2):
     try:
-        pdf_base64 = convertir_pdf_a_base64(path_pdf)
+        pdf_base64 = ProcessPDF(path_pdf, Tipo_pdf)
         txt = pdf_txt
         # Text Mining
         # DATOS GENERALES
@@ -572,9 +577,9 @@ def exportDataAcuseRecepcion(pdf_txt, path_pdf, Tipo_pdf, conexion1, conexion2):
 
         # data_fila = [rfc, Fecha_y_hora_presentacion, Num_de_Operacion, Periodo_de_declaracion, Ejercicio,  total_a_pagar, Vigente_hasta, Linea_de_Captura, Archivos[i]]
         
-        column_names = ["PDF","RFC","Fecha y hora presentacion","Num de Operacion","Periodo de Declaracion","Ejercicio","Total a Pagar","Vigente Hasta","Linea de Captura","Razon_Social","Impuesto a Favor","Path", "pdf base64"]
+        column_names = ["Tipo_pdf","RFC","Fecha y hora presentacion","Num de Operacion","Periodo de Declaracion","Ejercicio","Total a Pagar","Vigente Hasta","Linea de Captura","Razon_Social","Impuesto a Favor","Path"]
         valor=[
-            "Acuse Recepcion",
+            Tipo_pdf,
             rfc,
             Fecha_y_hora_presentacion,
             Num_de_Operacion,
@@ -585,20 +590,25 @@ def exportDataAcuseRecepcion(pdf_txt, path_pdf, Tipo_pdf, conexion1, conexion2):
             Linea_de_Captura,
             RazonSocial,
             Impuesto_a_favor,
-            path_pdf,
-            pdf_base64
+            path_pdf
             ]
         df = pd.DataFrame([valor], columns=column_names)
-        
-        almacenar_dataframe_en_excel(df, Tipo_pdf, conexion1)
-        almacenar_dataframe_en_sqlserver(df, Tipo_pdf, conexion2)
+        df = pd.merge(df, pdf_base64, how='outer')
+        try:
+            almacenar_dataframe_en_excel(df, Tipo_pdf, conexion1)
+        except Exception as e:
+            print("Error al almacenar en excel: ", e)
+        try:
+            almacenar_dataframe_en_sqlserver(df, Tipo_pdf, conexion2)
+        except Exception as e:
+            print("Error al almacernar el db: ", e)
         return df
     except Exception as e:
         print("Error en funcion exportDataAcuseRecepcion: ", e)
         
 def exportDataDiot(pdf_txt, path_pdf, Tipo_pdf, conexion1, conexion2):
     try:
-        pdf_base64 = convertir_pdf_a_base64(path_pdf)
+        pdf_base64 = ProcessPDF(path_pdf, Tipo_pdf)
         txt = pdf_txt
         # Text Mining
         # DATOS GENERALES
@@ -641,30 +651,35 @@ def exportDataDiot(pdf_txt, path_pdf, Tipo_pdf, conexion1, conexion2):
         except:
             Folio = ""
 
-        column_names = ["PDF","Usuario", "Archivo Recibido", "tamanio","Fecha_Recepcion", "Hora_Recepcion", "Folio", "Path", "pdf base64"]
+        column_names = ["Tipo_pdf","Usuario", "Archivo Recibido", "tamanio","Fecha_Recepcion", "Hora_Recepcion", "Folio", "Path"]
 
         valor=[
-            "Diot",
+            Tipo_pdf,
             usuario,
             Archivo_Recibido,
             tamanio,
             Fecha_Recepcion,
             Hora_Recepcion,
             Folio,
-            path_pdf,
-            pdf_base64
+            path_pdf
         ]
         df = pd.DataFrame(valor, columns=column_names)
-        
-        almacenar_dataframe_en_excel(df, Tipo_pdf, conexion1)
-        almacenar_dataframe_en_sqlserver(df, Tipo_pdf, conexion2)
+        df = pd.merge(df, pdf_base64, how='outer')
+        try:
+            almacenar_dataframe_en_excel(df, Tipo_pdf, conexion1)
+        except Exception as e:
+            print("Error al almacenar en excel: ", e)
+        try:
+            almacenar_dataframe_en_sqlserver(df, Tipo_pdf, conexion2)
+        except Exception as e:
+            print("Error al almacernar el db: ", e)
         return df
     except Exception as e:
         print("Error en funcion exportDataDiot: ", e)
 
 def exportDataConstancia(pdf_txt, path_pdf, Tipo_pdf, conexion1, conexion2):
     try:
-        pdf_base64 = convertir_pdf_a_base64(path_pdf)
+        pdf_base64 = ProcessPDF(path_pdf, Tipo_pdf)
         txt = pdf_txt
         # Text Mining
         # DATOS GENERALES
@@ -734,10 +749,10 @@ def exportDataConstancia(pdf_txt, path_pdf, Tipo_pdf, conexion1, conexion2):
         except:
             Regimenes = ""
 
-        column_names=["PDF","RFC", "Razon Social", "CURP", "Primer Apellido", "Segundo Apellido", "Nombre Comercial", "Fecha Operacion", "Estatus", "Regimenes", "Path", "pdf base64"]
+        column_names=["Tipo_pdf","RFC", "Razon Social", "CURP", "Primer Apellido", "Segundo Apellido", "Nombre Comercial", "Fecha Operacion", "Estatus", "Regimenes", "Path"]
 
         valor=[
-            "Constancia",
+            Tipo_pdf,
             rfc,
             Razon_Social_Nombre,
             Regimen_Nombre,
@@ -747,19 +762,25 @@ def exportDataConstancia(pdf_txt, path_pdf, Tipo_pdf, conexion1, conexion2):
             Fecha_Operaciones,
             Estatus,
             Regimenes,
-            path_pdf,
-            pdf_base64
+            path_pdf
         ]
         df = pd.DataFrame([valor], columns=column_names)
-        almacenar_dataframe_en_excel(df, Tipo_pdf, conexion1)
-        almacenar_dataframe_en_sqlserver(df, Tipo_pdf, conexion2)
+        df = pd.merge(df, pdf_base64, how='outer')
+        try:
+            almacenar_dataframe_en_excel(df, Tipo_pdf, conexion1)
+        except Exception as e:
+            print("Error al almacenar en excel: ", e)
+        try:
+            almacenar_dataframe_en_sqlserver(df, Tipo_pdf, conexion2)
+        except Exception as e:
+            print("Error al almacernar el db: ", e)
         return df
     except Exception as e:
         print("Error en funcion exportDataConstancia: ", e)
         
 def exportDataOpinionCumplimiento(pdf_txt, path_pdf, Tipo_pdf, conexion1, conexion2):
     try:
-        pdf_base64 = convertir_pdf_a_base64(path_pdf)
+        pdf_base64 = ProcessPDF(path_pdf, Tipo_pdf)
         txt = pdf_txt
         # Text Mining
         # DATOS GENERALES
@@ -777,24 +798,30 @@ def exportDataOpinionCumplimiento(pdf_txt, path_pdf, Tipo_pdf, conexion1, conexi
         except:
             RFC = ""
             
-        column_names=["PDF","RFC", "Folio", "Path", "pdf base64"]
+        column_names=["Tipo_pdf","RFC", "Folio", "Path"]
         valor=[
-            'Opinion cumplimiento',
+            Tipo_pdf,
             RFC,
             folio,
-            path_pdf,
-            pdf_base64
+            path_pdf
         ]
         df = pd.DataFrame([valor], columns=column_names)
-        almacenar_dataframe_en_excel(df, Tipo_pdf, conexion1)
-        almacenar_dataframe_en_sqlserver(df, Tipo_pdf, conexion2)
+        df = pd.merge(df, pdf_base64, how='outer')
+        try:
+            almacenar_dataframe_en_excel(df, Tipo_pdf, conexion1)
+        except Exception as e:
+            print("Error al almacenar en excel: ", e)
+        try:
+            almacenar_dataframe_en_sqlserver(df, Tipo_pdf, conexion2)
+        except Exception as e:
+            print("Error al almacernar el db: ", e)
         return df
     except Exception as e:
         print("Error en funcion exportDataOpinionCumplimiento: ", e)
         
 def exportDataPagos(pdf_txt, path_pdf, Tipo_pdf, conexion1, conexion2):
     try:
-        pdf_base64 = convertir_pdf_a_base64(path_pdf)
+        pdf_base64 = ProcessPDF(path_pdf, Tipo_pdf)
         txt = pdf_txt
 
         # Text Mining
@@ -905,9 +932,9 @@ def exportDataPagos(pdf_txt, path_pdf, Tipo_pdf, conexion1, conexion2):
                 Precio_por_concepto = ""
                 concepto =""
             # print(arreglo_conceptos[w])
-            column_names=["PDF","RFC", "Entidad", "Tipo", "Fecha Presentacion", "Importe a Pagar", "Linea de Captura", "Num Operacion", "Vigencia", "Tipo de Declaracion", "Fecha de Pago","Concepto de Pago","Pago por Concepto","Numero de Concepto", "Path", "pdf base64"]
+            column_names=["Tipo_pdf","RFC", "Entidad", "Tipo", "Fecha Presentacion", "Importe a Pagar", "Linea de Captura", "Num Operacion", "Vigencia", "Tipo de Declaracion", "Fecha de Pago","Concepto de Pago","Pago por Concepto","Numero de Concepto", "Path"]
             valor=[
-                'Acuse Confirmacion de Pago',
+                Tipo_pdf,
                 rfc,
                 Entidad,
                 Tipo,
@@ -922,12 +949,18 @@ def exportDataPagos(pdf_txt, path_pdf, Tipo_pdf, conexion1, conexion2):
                 concepto,
                 Precio_por_concepto,
                 str(Numero_Concepto),
-                path_pdf,
-                pdf_base64
+                path_pdf
                 ]
             df = pd.DataFrame([valor], columns=column_names)
-            almacenar_dataframe_en_excel(df, Tipo_pdf, conexion1)
-            almacenar_dataframe_en_sqlserver(df, Tipo_pdf, conexion2)
+            df = pd.merge(df, pdf_base64, how='outer')
+            try:
+                almacenar_dataframe_en_excel(df, Tipo_pdf, conexion1)
+            except Exception as e:
+                print("Error al almacenar en excel: ", e)
+            try:
+                almacenar_dataframe_en_sqlserver(df, Tipo_pdf, conexion2)
+            except Exception as e:
+                print("Error al almacernar el db: ", e)
             return df
     except Exception as e:
         print("Error en funcion exportDataPagos: ", e)
@@ -979,7 +1012,7 @@ def funcion_Conceptos(txt):
 
 def exportData_Info_Contribuyente(pdf_txt, path_pdf, Tipo_pdf, conexion1, conexion2):
     try:
-        pdf_base64 = convertir_pdf_a_base64(path_pdf)
+        pdf_base64 = ProcessPDF(path_pdf, Tipo_pdf)
         # Text Mining
         # DATOS GENERALES
         txt = pdf_txt
@@ -1041,10 +1074,10 @@ def exportData_Info_Contribuyente(pdf_txt, path_pdf, Tipo_pdf, conexion1, conexi
         except:
             cuenta_sipare = ""
         
-        column_names=["PDF","RFC", "Nombre","Usuario","Calle Numero", "Estado", "Contraseña","Contraseña Firma", "Contraseña SIPARE", "Cuenta SIPARE", "Path", "pdf base64"]
+        column_names=["Tipo_pdf","RFC", "Nombre","Usuario","Calle Numero", "Estado", "Contraseña","Contraseña Firma", "Contraseña SIPARE", "Cuenta SIPARE", "Path"]
             
         valor=[
-            "Informacion Contribuyente",
+            Tipo_pdf,
             rfc,
             nombre,
             usuario,
@@ -1054,12 +1087,18 @@ def exportData_Info_Contribuyente(pdf_txt, path_pdf, Tipo_pdf, conexion1, conexi
             contraseña_firma,
             contraseña_sipare,
             cuenta_sipare,
-            path_pdf,
-            pdf_base64
+            path_pdf
             ]
         df = pd.DataFrame([valor], columns=column_names)
-        almacenar_dataframe_en_excel(df, Tipo_pdf, conexion1)
-        almacenar_dataframe_en_sqlserver(df, Tipo_pdf, conexion2)
+        df = pd.merge(df, pdf_base64, how='outer')
+        try:
+            almacenar_dataframe_en_excel(df, Tipo_pdf, conexion1)
+        except Exception as e:
+            print("Error al almacenar en excel: ", e)
+        try:
+            almacenar_dataframe_en_sqlserver(df, Tipo_pdf, conexion2)
+        except Exception as e:
+            print("Error al almacernar el db: ", e)
         return df
     except Exception as e:
         print("Error en funcion exportData_Info_Contribuyente: ", e)
@@ -1115,9 +1154,32 @@ def almacenar_dataframe_en_sqlserver(dataframe, tabla, conexion_str):
     inspector = inspect(engine)
     if tabla in inspector.get_table_names():
         # Si la tabla existe, agregar el DataFrame a la tabla
-        dataframe.to_sql(name=tabla, con=engine, index=False, if_exists='append')
+        dataframe.to_sql(name=tabla, con=engine, index=False, if_exists='append', method='multi', chunksize=1000)
         print(f"DataFrame agregado a la tabla '{tabla}'.")
     else:
         # Si la tabla no existe, crear la tabla y almacenar el DataFrame
         dataframe.to_sql(name=tabla, con=engine, index=False, if_exists='replace')
         print(f"Tabla '{tabla}' creada y DataFrame almacenado.")
+        
+def ProcessPDF(WDir, FName):  
+    with open(WDir, "rb") as Tempfile: # Abrir el archivo PDF
+        my_string = base64.b64encode(Tempfile.read()) # Obtener el contenido del archivo PDF en formato base64
+        my_string = my_string.decode('ascii') # Eliminar la referencia binaria del código base64
+
+    Data_ = {} # Crear un diccionario para los encabezados del DataFrame
+    field_names = ['Tipo_pdf']
+    [field_names.append('B' + str(i)) for i in range(3)] # Ajustar para tener 31 columnas
+
+    # Crear un diccionario con los datos
+    Data_['Tipo_pdf'] = FName
+    for j in range(31):  # Iterar sobre las 31 columnas
+        start = j * 32000
+        end = (j + 1) * 32000
+        if end > len(my_string):  # Ajustar si la longitud de la cadena es menor
+            end = len(my_string)
+        Data_['B' + str(j)] = my_string[start:end]
+
+    # Crear el DataFrame a partir del diccionario
+    df = pd.DataFrame(Data_, index=[0])
+
+    return df
